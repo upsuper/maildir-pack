@@ -1,0 +1,18 @@
+[package]
+name = "maildir-pack"
+description = "Pack maildir into archive files"
+version = "0.1.0"
+authors = ["Xidorn Quan <me@upsuper.org>"]
+license = "MIT"
+categories = ["command-line-utilities", "email"]
+keywords = ["email", "maildir"]
+repository = "https://github.com/upsuper/maildir-pack"
+
+[dependencies]
+chrono = "0.4.0"
+clap = "2.26.0"
+indicatif = "0.7.0"
+rayon = "0.8.2"
+sha2 = "0.6.0"
+tar = "0.4.13"
+xz2 = "0.1.3"
