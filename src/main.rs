@@ -16,24 +16,9 @@ mod verify;
 use args::Args;
 use std::fs;
 use std::io;
-use std::path::Path;
 
 fn main() {
-    let matches = clap_app!(maildirpack =>
-        (version: env!("CARGO_PKG_VERSION"))
-        (author: "Xidorn Quan <me@upsuper.org>")
-        (about: "Pack mails from a maildir into archives")
-        (@arg MAILDIR: +required "Path to the maildir")
-    ).get_matches();
-
-    let maildir = matches.value_of("MAILDIR").unwrap();
-    let maildir = Path::new(maildir);
-    let args = Args {
-        maildir: maildir.to_path_buf(),
-        packed_dir: maildir.join("packed"),
-    };
-
-    do_main(&args).unwrap();
+    do_main(&Args::parse_args()).unwrap();
 }
 
 fn do_main(args: &Args) -> io::Result<()> {
