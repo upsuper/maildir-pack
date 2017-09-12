@@ -6,6 +6,8 @@ pub struct Args {
     pub maildir: PathBuf,
     /// The directory we put packed archives in, which is maildir/packed.
     pub packed_dir: PathBuf,
+    /// Whether we should show any progress.
+    pub quiet : bool,
 }
 
 impl Args {
@@ -15,6 +17,7 @@ impl Args {
             (author: "Xidorn Quan <me@upsuper.org>")
             (about: "Pack mails from a maildir into archives")
             (@arg MAILDIR: +required "Path to the maildir")
+            (@arg quiet: -q --quiet "Suppress any progress output")
         ).get_matches();
 
         let maildir = matches.value_of("MAILDIR").unwrap();
@@ -22,6 +25,7 @@ impl Args {
         Args {
             maildir: maildir.to_path_buf(),
             packed_dir: maildir.join("packed"),
+            quiet: matches.is_present("quiet"),
         }
     }
 }

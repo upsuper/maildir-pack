@@ -1,5 +1,4 @@
 use args::Args;
-use indicatif::ProgressBar;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::io::{self, Read, Write};
@@ -7,6 +6,7 @@ use std::ffi::{OsStr, OsString};
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 use tar::{self, Archive as TarArchive, Builder as TarBuilder};
+use utils;
 use verify::{HashResult, StreamHasher};
 use xz2::read::XzDecoder;
 use xz2::write::XzEncoder;
@@ -94,7 +94,7 @@ fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> io::Result<()> {
 }
 
 pub fn archive_emails(args: &Args, map: HashMap<String, Vec<PathBuf>>) {
-    let progress = ProgressBar::new(map.len() as u64);
+    let progress = utils::create_progress_bar(args, map.len());
     progress.tick();
     map.into_par_iter()
        .for_each(|(name, emails)| {

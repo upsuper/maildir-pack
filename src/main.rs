@@ -12,6 +12,7 @@ mod classify;
 mod collect;
 mod execute;
 mod verify;
+mod utils;
 
 use args::Args;
 use std::fs;
@@ -22,13 +23,21 @@ fn main() {
 }
 
 fn do_main(args: &Args) -> io::Result<()> {
-    eprintln!("Listing emails...");
-    let list = collect::list_emails(&args.maildir)?;
+    macro_rules! report {
+        ($msg:expr) => {
+            if !args.quiet {
+                eprintln!($msg);
+            }
+        }
+    }
 
-    eprintln!("Classifying emails...");
+    report!("Listing emails...");
+    let list = collect::list_emails(args)?;
+
+    report!("Classifying emails...");
     let map = classify::classify_emails(list);
 
-    eprintln!("Archiving emails...");
+    report!("Archiving emails...");
     fs::create_dir_all(&args.packed_dir)?;
     execute::archive_emails(args, map);
 

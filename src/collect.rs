@@ -1,5 +1,5 @@
+use args::Args;
 use chrono::{DateTime, FixedOffset};
-use indicatif::ProgressBar;
 use rayon::prelude::*;
 use std::borrow::Cow;
 use std::error;
@@ -8,6 +8,7 @@ use std::fmt;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
 use std::path::{Path, PathBuf};
+use utils;
 
 #[derive(Debug)]
 pub struct EmailError {
@@ -79,15 +80,20 @@ fn get_datetime_from_email(file: &Path) -> io::Result<DateTime<FixedOffset>> {
                    EmailError::new(file, "No Date field found")))
 }
 
-pub fn list_emails(maildir: &Path)
+pub fn list_emails(args: &Args)
     -> io::Result<Vec<(PathBuf, DateTime<FixedOffset>)>>
 {
     let mut files = vec![];
-    for entry in fs::read_dir(&maildir.join("new"))? {
+    for entry in fs::read_dir(&args.maildir.join("new"))? {
         files.push(entry?.path());
     }
 
-    let progress = ProgressBar::new(files.len() as u64);
+    // There is no email, just return.
+    if files.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let progress = utils::create_progress_bar(args, files.len());
     let result = files.into_par_iter().enumerate().map(|(i, path)| {
         let dt = get_datetime_from_email(&path).unwrap();
         if i % 128 == 127 {
