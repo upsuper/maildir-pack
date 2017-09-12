@@ -2,7 +2,9 @@ use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub struct Args {
+    /// The maildir we are working on.
     pub maildir: PathBuf,
+    /// The directory we put packed archives in, which is maildir/packed.
     pub packed_dir: PathBuf,
 }
 
