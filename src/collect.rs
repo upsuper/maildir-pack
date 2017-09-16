@@ -107,7 +107,7 @@ pub fn list_emails(args: &Args)
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

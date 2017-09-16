@@ -19,7 +19,7 @@ pub fn classify_emails(list: Vec<(PathBuf, DateTime<FixedOffset>)>)
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     use chrono::DateTime;
