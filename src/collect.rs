@@ -2,48 +2,10 @@ use args::Args;
 use chrono::{DateTime, FixedOffset};
 use rayon::prelude::*;
 use std::borrow::Cow;
-use std::error;
-use std::ffi::{OsStr, OsString};
-use std::fmt;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use utils;
-
-#[derive(Debug)]
-pub struct EmailError {
-    filename: Option<OsString>,
-    inner: Box<error::Error + Send + Sync>,
-}
-
-impl EmailError {
-    fn new<E>(path: &Path, inner: E) -> Self
-        where E: Into<Box<error::Error + Send + Sync>>
-    {
-        EmailError {
-            filename: path.file_name().map(OsStr::to_os_string),
-            inner: inner.into(),
-        }
-    }
-}
-
-impl error::Error for EmailError {
-    fn description(&self) -> &str {
-        "Failed to handle email"
-    }
-
-    fn cause(&self) -> Option<&error::Error> {
-        Some(&*self.inner)
-    }
-}
-
-impl fmt::Display for EmailError {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let filename = self.filename.as_ref()
-                           .and_then(|s| s.to_str()).unwrap_or("");
-        write!(fmt, "Failed to handle {}: {}", filename, self.inner)
-    }
-}
 
 fn normalize_datetime(mut dt: &str) -> Cow<str> {
     // Trailing commentary timezone info is not recognized.
@@ -62,8 +24,7 @@ fn normalize_datetime(mut dt: &str) -> Cow<str> {
     }
 }
 
-fn get_datetime_from_email(file: &Path) -> io::Result<DateTime<FixedOffset>> {
-    use std::io::{Error, ErrorKind};
+fn get_datetime_from_email(file: &Path) -> io::Result<Option<DateTime<FixedOffset>>> {
     const DATE_HEADER: &str = "Date: ";
     let reader = BufReader::new(File::open(file)?);
     for line in reader.lines() {
@@ -72,16 +33,15 @@ fn get_datetime_from_email(file: &Path) -> io::Result<DateTime<FixedOffset>> {
             continue;
         }
         let dt_str = normalize_datetime(&line[DATE_HEADER.len()..]);
-        let dt = DateTime::parse_from_rfc2822(&dt_str);
-        return dt.map_err(|err| Error::new(ErrorKind::InvalidData,
-                                           EmailError::new(file, err)));
+        if let Ok(dt) = DateTime::parse_from_rfc2822(&dt_str) {
+            return Ok(Some(dt));
+        }
     }
-    Err(Error::new(ErrorKind::UnexpectedEof,
-                   EmailError::new(file, "No Date field found")))
+    Ok(None)
 }
 
 pub fn list_emails(args: &Args)
-    -> io::Result<Vec<(PathBuf, DateTime<FixedOffset>)>>
+    -> io::Result<Vec<(PathBuf, Option<DateTime<FixedOffset>>)>>
 {
     let mut files = vec![];
     for entry in fs::read_dir(&args.maildir.join("new"))? {

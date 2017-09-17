@@ -2,11 +2,12 @@ use chrono::{DateTime, FixedOffset};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-fn get_archive_name(dt: &DateTime<FixedOffset>) -> String {
-    dt.naive_utc().format("%Y-%m").to_string()
+fn get_archive_name(dt: &Option<DateTime<FixedOffset>>) -> String {
+    dt.map(|dt| dt.naive_utc().format("%Y-%m").to_string())
+        .unwrap_or_else(|| "unknown".to_string())
 }
 
-pub fn classify_emails(list: Vec<(PathBuf, DateTime<FixedOffset>)>)
+pub fn classify_emails(list: Vec<(PathBuf, Option<DateTime<FixedOffset>>)>)
     -> HashMap<String, Vec<PathBuf>>
 {
     let mut map = HashMap::new();
@@ -27,7 +28,7 @@ mod tests {
     #[test]
     fn test_get_archive_name() {
         fn assert_name(time: &str, expected: &str) {
-            let dt = DateTime::parse_from_rfc3339(time).unwrap();
+            let dt = Some(DateTime::parse_from_rfc3339(time).unwrap());
             assert_eq!(get_archive_name(&dt), expected);
         }
 
@@ -38,5 +39,7 @@ mod tests {
         assert_name("2017-07-01T03:59:59+04:00", "2017-06");
         assert_name("2017-07-01T03:59:59+00:00", "2017-07");
         assert_name("2017-07-01T03:59:59-04:00", "2017-07");
+
+        assert_eq!(get_archive_name(&None), "unknown");
     }
 }
