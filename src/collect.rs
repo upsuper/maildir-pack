@@ -24,20 +24,36 @@ fn normalize_datetime(mut dt: &str) -> Cow<str> {
     }
 }
 
+/// Whether the given byte is a WSP as defined in RFC 5234 Appendix B.1
+/// https://tools.ietf.org/html/rfc5234#appendix-B.1
+fn is_wsp(b: u8) -> bool {
+    b == 0x20 || b == 0x09
+}
+
 fn get_datetime_from_email(file: &Path) -> io::Result<Option<DateTime<FixedOffset>>> {
     const DATE_HEADER: &str = "Date: ";
     let reader = BufReader::new(File::open(file)?);
+    let mut date: Option<String> = None;
     for line in reader.lines() {
         let line = line?;
-        if !line.starts_with(DATE_HEADER) {
-            continue;
+        if line.is_empty() {
+            break;
         }
-        let dt_str = normalize_datetime(&line[DATE_HEADER.len()..]);
-        if let Ok(dt) = DateTime::parse_from_rfc2822(&dt_str) {
-            return Ok(Some(dt));
+        if date.is_some() {
+            // Line breaks can be folded with whitespaces.
+            if !is_wsp(line.as_bytes()[0]) {
+                break;
+            }
+            date.as_mut().unwrap().push_str(&line);
+        } else {
+            if !line.starts_with(DATE_HEADER) {
+                continue;
+            }
+            date = Some(line[DATE_HEADER.len()..].to_string());
         }
     }
-    Ok(None)
+    Ok(date.as_ref().map(|date| normalize_datetime(date.trim()))
+           .and_then(|dt_str| DateTime::parse_from_rfc2822(&dt_str).ok()))
 }
 
 pub fn list_emails(args: &Args)
