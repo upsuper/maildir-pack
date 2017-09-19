@@ -55,7 +55,7 @@ pub fn list_emails(args: &Args)
 
     let progress = utils::create_progress_bar(args, files.len());
     let result = files.into_par_iter().enumerate().map(|(i, path)| {
-        let dt = get_datetime_from_email(&path).unwrap();
+        let dt = get_datetime_from_email(&path).unwrap_or(None);
         if i % 128 == 127 {
             progress.inc(128);
         }
