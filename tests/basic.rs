@@ -117,8 +117,44 @@ struct TempMaildir {
 }
 
 impl TempMaildir {
+    fn new(name: &'static str) -> io::Result<Self> {
+        let dir_name = format!("{}-{}", env!("CARGO_PKG_NAME"), name);
+        let tmp_dir = TempDir::new(&dir_name)?;
+        let new_dir = tmp_dir.path().join("new");
+        let packed_dir = tmp_dir.path().join("packed");
+        // Create maildir structure. Since we currently only use the new
+        // directory, we only create it. If we extend support to cur at
+        // some point, we should create that as well.
+        fs::create_dir(&new_dir)?;
+        Ok(TempMaildir {
+            name,
+            tmp_dir: Some(tmp_dir),
+            new_dir,
+            packed_dir,
+        })
+    }
+
     fn path(&self) -> &Path {
         self.tmp_dir.as_ref().unwrap().path()
+    }
+
+    fn fill_maildir<I, P>(&self, emails: I) -> io::Result<()>
+        where I: Iterator<Item=P>, P: AsRef<Path>
+    {
+        for email in emails {
+            let email = email.as_ref();
+            fs::copy(email, self.new_dir.join(email.file_name().unwrap()))?;
+        }
+        Ok(())
+    }
+
+    fn execute_packing(&self) {
+        let result = Command::new(&*BIN_PATH)
+            .arg("--quiet")
+            .arg(self.path())
+            .status()
+            .expect("Failed to execute");
+        assert!(result.success());
     }
 }
 
@@ -134,45 +170,10 @@ impl Drop for TempMaildir {
     }
 }
 
-fn setup_maildir(name: &'static str) -> io::Result<TempMaildir> {
-    let tmp_dir = TempDir::new(env!("CARGO_PKG_NAME"))?;
-    let new_dir = tmp_dir.path().join("new");
-    let packed_dir = tmp_dir.path().join("packed");
-    // Create maildir structure. Since we currently only use the new
-    // directory, we only create it. If we extend support to cur at
-    // some point, we should create that as well.
-    fs::create_dir(&new_dir)?;
-    Ok(TempMaildir {
-        name,
-        tmp_dir: Some(tmp_dir),
-        new_dir,
-        packed_dir,
-    })
-}
-
 fn generate_email_set<I, P>(iter: I) -> HashSet<&'static Path>
     where I: Iterator<Item=P>, P: Deref<Target=&'static Path>
 {
     iter.map(|email| *email.deref()).collect()
-}
-
-fn fill_maildir<'a, I, P>(maildir: &TempMaildir, emails: I) -> io::Result<()>
-    where I: Iterator<Item=P>, P: AsRef<Path>
-{
-    for email in emails {
-        let email = email.as_ref();
-        fs::copy(email, maildir.new_dir.join(email.file_name().unwrap()))?;
-    }
-    Ok(())
-}
-
-fn execute_packing(maildir: &TempMaildir) {
-    let result = Command::new(&*BIN_PATH)
-        .arg("--quiet")
-        .arg(maildir.path())
-        .status()
-        .expect("Failed to execute");
-    assert!(result.success());
 }
 
 fn generate_expected_result(email_set: &HashSet<&'static Path>)
@@ -318,13 +319,13 @@ fn check_maildir(maildir: &TempMaildir,
 
 #[test]
 fn basic_packing() {
-    let maildir = setup_maildir("basic_packing").unwrap();
+    let maildir = TempMaildir::new("basic_packing").unwrap();
     // Copy all emails into the new dir.
     let emails = generate_email_set(
         ALL_EMAILS.values().flat_map(|l| l.iter()));
-    fill_maildir(&maildir, emails.iter()).unwrap();
+    maildir.fill_maildir(emails.iter()).unwrap();
     // Pack the maildir.
-    execute_packing(&maildir);
+    maildir.execute_packing();
     // Check the result.
     let expected = generate_expected_result(&emails);
     check_packed(&maildir, expected, HashMap::new()).unwrap();
@@ -334,7 +335,7 @@ fn basic_packing() {
 
 #[test]
 fn incremental_packing() {
-    let maildir = setup_maildir("incremental_packing").unwrap();
+    let maildir = TempMaildir::new("incremental_packing").unwrap();
     // Generate test sets.
     let archives: Vec<_> = ALL_EMAILS.iter()
         .filter(|&(_, emails)| emails.len() >= 2)
@@ -351,8 +352,8 @@ fn incremental_packing() {
     assert!(!initial_set.is_superset(&second_set));
 
     /* Initial packing */
-    fill_maildir(&maildir, initial_set.iter()).unwrap();
-    execute_packing(&maildir);
+    maildir.fill_maildir(initial_set.iter()).unwrap();
+    maildir.execute_packing();
     let expected = generate_expected_result(&initial_set);
     check_packed(&maildir, expected, HashMap::new()).unwrap();
     check_maildir(&maildir, HashMap::new()).unwrap();
@@ -368,8 +369,8 @@ fn incremental_packing() {
         }).collect();
 
     /* Second packing */
-    fill_maildir(&maildir, second_set.iter()).unwrap();
-    execute_packing(&maildir);
+    maildir.fill_maildir(second_set.iter()).unwrap();
+    maildir.execute_packing();
     let merged = second_set.union(&initial_set)
         .map(|&email| email).collect();
     let expected = generate_expected_result(&merged);
