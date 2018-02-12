@@ -17,7 +17,7 @@ impl<R: Read> StreamHasher<R> {
         }
     }
 
-    pub fn get_result(&self) -> HashResult {
+    pub fn get_result(self) -> HashResult {
         let mut result = [0; HASH_LEN];
         result.copy_from_slice(self.hasher.result().as_slice());
         result
