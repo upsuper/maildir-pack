@@ -1,5 +1,7 @@
 # maildir-pack
 
+[![Build Status](https://travis-ci.org/upsuper/maildir-pack.svg?branch=master)](https://travis-ci.org/upsuper/maildir-pack)
+
 `maildir-pack` is a tool to pack emails in a maildir into monthly archive files.
 
 ```
