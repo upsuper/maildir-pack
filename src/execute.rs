@@ -47,13 +47,9 @@ fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> io::Result<()> {
     tar_builder.mode(tar::HeaderMode::Deterministic);
 
     // Fill files from existing archive and backup it.
-    let mut old_archive_exists = false;
     let mut existing_files = HashMap::new();
     if let Ok(file) = File::open(&archive_path) {
         fill_archive_from(file, &mut tar_builder, &mut existing_files)?;
-        old_archive_exists = true;
-    }
-    if old_archive_exists {
         let backup_path = args.packed_dir.join(format!("{}.bak", archive_name));
         fs::rename(&archive_path, &backup_path)?;
     }
@@ -74,8 +70,8 @@ fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> io::Result<()> {
             }
             let hash = hasher.get_result();
             if expected_hash[..] != hash[..] {
-                eprintln!(concat!("Warning: {:?} exists in the archive ",
-                                  "but has different content"), file_name);
+                eprintln!("Warning: {:?} exists in the archive \
+                           but has different content", file_name);
             }
         } else {
             tar_builder.append_file(file_name, &mut file)?;
