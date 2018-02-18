@@ -52,13 +52,12 @@ fn get_datetime_from_email(file: &Path) -> io::Result<Option<DateTime<FixedOffse
             date = Some(line[DATE_HEADER.len()..].to_string());
         }
     }
-    Ok(date.as_ref().map(|date| normalize_datetime(date.trim()))
-           .and_then(|dt_str| DateTime::parse_from_rfc2822(&dt_str).ok()))
+    Ok(date.as_ref()
+        .map(|date| normalize_datetime(date.trim()))
+        .and_then(|dt_str| DateTime::parse_from_rfc2822(&dt_str).ok()))
 }
 
-pub fn list_emails(args: &Args)
-    -> io::Result<Vec<(PathBuf, Option<DateTime<FixedOffset>>)>>
-{
+pub fn list_emails(args: &Args) -> io::Result<Vec<(PathBuf, Option<DateTime<FixedOffset>>)>> {
     let mut files = vec![];
     for entry in fs::read_dir(&args.maildir.join("new"))? {
         files.push(entry?.path());
@@ -70,13 +69,17 @@ pub fn list_emails(args: &Args)
     }
 
     let progress = utils::create_progress_bar(args, files.len());
-    let result = files.into_par_iter().enumerate().map(|(i, path)| {
-        let dt = get_datetime_from_email(&path).unwrap_or(None);
-        if i % 128 == 127 {
-            progress.inc(128);
-        }
-        (path, dt)
-    }).collect();
+    let result = files
+        .into_par_iter()
+        .enumerate()
+        .map(|(i, path)| {
+            let dt = get_datetime_from_email(&path).unwrap_or(None);
+            if i % 128 == 127 {
+                progress.inc(128);
+            }
+            (path, dt)
+        })
+        .collect();
     progress.finish_and_clear();
 
     Ok(result)
@@ -88,11 +91,17 @@ mod tests {
 
     #[test]
     fn test_normalize_datetime() {
-        assert_eq!(normalize_datetime("Thu, 29 Sep 2016 23:18:26 +0000"),
-                   "Thu, 29 Sep 2016 23:18:26 +0000");
-        assert_eq!(normalize_datetime("Tue, 11 Jul 2017 18:30:33 +0000 (UTC)"),
-                   "Tue, 11 Jul 2017 18:30:33 +0000");
-        assert_eq!(normalize_datetime("Sat, 01 Oct 2016 14:47:20 -0000"),
-                   "Sat, 01 Oct 2016 14:47:20 +0000");
+        assert_eq!(
+            normalize_datetime("Thu, 29 Sep 2016 23:18:26 +0000"),
+            "Thu, 29 Sep 2016 23:18:26 +0000"
+        );
+        assert_eq!(
+            normalize_datetime("Tue, 11 Jul 2017 18:30:33 +0000 (UTC)"),
+            "Tue, 11 Jul 2017 18:30:33 +0000"
+        );
+        assert_eq!(
+            normalize_datetime("Sat, 01 Oct 2016 14:47:20 -0000"),
+            "Sat, 01 Oct 2016 14:47:20 +0000"
+        );
     }
 }

@@ -15,9 +15,13 @@ fn get_file_name(path: &Path) -> &OsStr {
     path.file_name().expect("Unexpected path")
 }
 
-fn fill_archive_from<W>(src: File, builder: &mut TarBuilder<W>,
-                        files: &mut HashMap<OsString, HashResult>)
-    -> io::Result<()> where W: Write
+fn fill_archive_from<W>(
+    src: File,
+    builder: &mut TarBuilder<W>,
+    files: &mut HashMap<OsString, HashResult>,
+) -> io::Result<()>
+where
+    W: Write,
 {
     let xz_reader = XzDecoder::new(src);
     let mut tar_archive = TarArchive::new(xz_reader);
@@ -70,8 +74,11 @@ fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> io::Result<()> {
             }
             let hash = hasher.get_result();
             if expected_hash[..] != hash[..] {
-                eprintln!("Warning: {:?} exists in the archive \
-                           but has different content", file_name);
+                eprintln!(
+                    "Warning: {:?} exists in the archive \
+                     but has different content",
+                    file_name
+                );
             }
         } else {
             tar_builder.append_file(file_name, &mut file)?;
@@ -83,8 +90,9 @@ fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> io::Result<()> {
     fs::rename(&tmp_path, &archive_path)?;
 
     // Remove the archived emails.
-    emails.par_iter()
-          .for_each(|email| fs::remove_file(email).unwrap());
+    emails
+        .par_iter()
+        .for_each(|email| fs::remove_file(email).unwrap());
 
     Ok(())
 }
@@ -92,10 +100,9 @@ fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> io::Result<()> {
 pub fn archive_emails(args: &Args, map: HashMap<String, Vec<PathBuf>>) {
     let progress = utils::create_progress_bar(args, map.len());
     progress.tick();
-    map.into_par_iter()
-       .for_each(|(name, emails)| {
-           do_archive(args, &name, emails).unwrap();
-           progress.inc(1);
-       });
+    map.into_par_iter().for_each(|(name, emails)| {
+        do_archive(args, &name, emails).unwrap();
+        progress.inc(1);
+    });
     progress.finish_and_clear();
 }

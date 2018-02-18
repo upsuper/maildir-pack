@@ -139,7 +139,9 @@ impl TempMaildir {
     }
 
     fn fill_maildir<I, P>(&self, emails: I) -> io::Result<()>
-        where I: Iterator<Item=P>, P: AsRef<Path>
+    where
+        I: Iterator<Item = P>,
+        P: AsRef<Path>,
     {
         for email in emails {
             let email = email.as_ref();
@@ -171,31 +173,38 @@ impl Drop for TempMaildir {
 }
 
 fn generate_email_set<I, P>(iter: I) -> HashSet<&'static Path>
-    where I: Iterator<Item=P>, P: Deref<Target=&'static Path>
+where
+    I: Iterator<Item = P>,
+    P: Deref<Target = &'static Path>,
 {
     iter.map(|email| *email.deref()).collect()
 }
 
-fn generate_expected_result(email_set: &HashSet<&'static Path>)
-    -> HashMap<&'static str, HashMap<&'static OsStr, HashResult>>
-{
-    ALL_EMAILS.iter().filter_map(|(&archive, emails)| {
-        let expected_content = emails.iter()
-            .filter(|&email| email_set.contains(email))
-            .map(|email| {
-                let file_name = email.file_name().unwrap();
-                let hash = EMAIL_HASHS[email];
-                (file_name, hash)
-            }).collect::<HashMap<_, _>>();
-        if !expected_content.is_empty() {
-            Some((archive, expected_content))
-        } else {
-            None
-        }
-    }).collect()
+fn generate_expected_result(
+    email_set: &HashSet<&'static Path>,
+) -> HashMap<&'static str, HashMap<&'static OsStr, HashResult>> {
+    ALL_EMAILS
+        .iter()
+        .filter_map(|(&archive, emails)| {
+            let expected_content = emails
+                .iter()
+                .filter(|&email| email_set.contains(email))
+                .map(|email| {
+                    let file_name = email.file_name().unwrap();
+                    let hash = EMAIL_HASHS[email];
+                    (file_name, hash)
+                })
+                .collect::<HashMap<_, _>>();
+            if !expected_content.is_empty() {
+                Some((archive, expected_content))
+            } else {
+                None
+            }
+        })
+        .collect()
 }
 
-fn join_names<'a, I: Iterator<Item=&'a str>>(mut iter: I) -> String {
+fn join_names<'a, I: Iterator<Item = &'a str>>(mut iter: I) -> String {
     let mut result = String::new();
     if let Some(first) = iter.next() {
         result.push_str(first);
@@ -207,8 +216,7 @@ fn join_names<'a, I: Iterator<Item=&'a str>>(mut iter: I) -> String {
     result
 }
 
-fn get_name_with_suffix<'a>(file_name: &'a str, suffix: &str) -> Option<&'a str>
-{
+fn get_name_with_suffix<'a>(file_name: &'a str, suffix: &str) -> Option<&'a str> {
     if file_name.ends_with(suffix) {
         Some(&file_name[..file_name.len() - suffix.len()])
     } else {
@@ -216,17 +224,16 @@ fn get_name_with_suffix<'a>(file_name: &'a str, suffix: &str) -> Option<&'a str>
     }
 }
 
-fn check_packed(maildir: &TempMaildir,
-                mut expected: HashMap<&str, HashMap<&OsStr, HashResult>>,
-                mut expected_backup: HashMap<&str, HashResult>)
-    -> io::Result<()>
-{
+fn check_packed(
+    maildir: &TempMaildir,
+    mut expected: HashMap<&str, HashMap<&OsStr, HashResult>>,
+    mut expected_backup: HashMap<&str, HashResult>,
+) -> io::Result<()> {
     for archive in fs::read_dir(&maildir.packed_dir)? {
         let archive = archive?.path();
         let archive_name = archive.file_name().unwrap().to_str().unwrap();
-        let report_unexpected_file = || -> ! {
-            panic!("Unexpected file {} in maildir/packed", archive_name)
-        };
+        let report_unexpected_file =
+            || -> ! { panic!("Unexpected file {} in maildir/packed", archive_name) };
         if let Some(key) = get_name_with_suffix(archive_name, ARCHIVE_SUFFIX) {
             // Retrieve the expected content of the archive.
             let mut expected_content = match expected.remove(key) {
@@ -244,22 +251,25 @@ fn check_packed(maildir: &TempMaildir,
                 // Retrieve the expected hash.
                 let expected_hash = match expected_content.remove(file_name) {
                     Some(hash) => hash,
-                    None => panic!("Unexpected file {:?} in archive {}",
-                                   file_name, archive_name),
+                    None => panic!(
+                        "Unexpected file {:?} in archive {}",
+                        file_name, archive_name
+                    ),
                 };
                 // Calculate actual hash of the content.
                 let hash = hash_content(entry)?;
-                assert_eq!(hash, expected_hash,
-                           "Content of file {:?} in archive {} mismatches",
-                           file_name, archive_name);
+                assert_eq!(
+                    hash,
+                    expected_hash,
+                    "Content of file {:?} in archive {} mismatches",
+                    file_name,
+                    archive_name
+                );
             }
             // Check that no file left.
             if expected_content.len() > 0 {
-                let files = join_names(expected_content.keys().map(|name| {
-                    name.to_str().unwrap()
-                }));
-                panic!("Files not found in archive {}: {}",
-                       archive_name, files);
+                let files = join_names(expected_content.keys().map(|name| name.to_str().unwrap()));
+                panic!("Files not found in archive {}: {}", archive_name, files);
             }
             continue;
         }
@@ -269,9 +279,12 @@ fn check_packed(maildir: &TempMaildir,
                 None => report_unexpected_file(),
             };
             let hash = hash_content(File::open(&archive)?)?;
-            assert_eq!(hash, expected_hash,
-                       "Content of backup file {:?} mismatches",
-                       archive_name);
+            assert_eq!(
+                hash,
+                expected_hash,
+                "Content of backup file {:?} mismatches",
+                archive_name
+            );
             continue;
         }
         report_unexpected_file();
@@ -289,10 +302,10 @@ fn check_packed(maildir: &TempMaildir,
     Ok(())
 }
 
-fn check_maildir(maildir: &TempMaildir,
-                 mut expected: HashMap<&OsStr, HashResult>)
-    -> io::Result<()>
-{
+fn check_maildir(
+    maildir: &TempMaildir,
+    mut expected: HashMap<&OsStr, HashResult>,
+) -> io::Result<()> {
     for file in fs::read_dir(&maildir.new_dir)? {
         let file = file?.path();
         let file_name = file.file_name().unwrap();
@@ -303,15 +316,16 @@ fn check_maildir(maildir: &TempMaildir,
         };
         // Calculate actual hash of the content.
         let hash = hash_content(File::open(&file)?)?;
-        assert_eq!(hash, expected_hash,
-                   "Content of file {:?} in maildir/new mismatches",
-                   file_name);
+        assert_eq!(
+            hash,
+            expected_hash,
+            "Content of file {:?} in maildir/new mismatches",
+            file_name
+        );
     }
     // Check that no file left.
     if expected.len() > 0 {
-        let files = join_names(expected.keys().map(|&name| {
-            name.to_str().unwrap()
-        }));
+        let files = join_names(expected.keys().map(|&name| name.to_str().unwrap()));
         panic!("Files not found in maildir/new: {}", files);
     }
     Ok(())
@@ -321,8 +335,7 @@ fn check_maildir(maildir: &TempMaildir,
 fn basic_packing() {
     let maildir = TempMaildir::new("basic_packing").unwrap();
     // Copy all emails into the new dir.
-    let emails = generate_email_set(
-        ALL_EMAILS.values().flat_map(|l| l.iter()));
+    let emails = generate_email_set(ALL_EMAILS.values().flat_map(|l| l.iter()));
     maildir.fill_maildir(emails.iter()).unwrap();
     // Pack the maildir.
     maildir.execute_packing();
@@ -337,15 +350,20 @@ fn basic_packing() {
 fn incremental_packing() {
     let maildir = TempMaildir::new("incremental_packing").unwrap();
     // Generate test sets.
-    let archives: Vec<_> = ALL_EMAILS.iter()
+    let archives: Vec<_> = ALL_EMAILS
+        .iter()
         .filter(|&(_, emails)| emails.len() >= 2)
         .collect();
     let initial_set = generate_email_set(
-        archives.iter()
-        .flat_map(|&(_, emails)| emails[..emails.len() * 2 / 3].iter()));
+        archives
+            .iter()
+            .flat_map(|&(_, emails)| emails[..emails.len() * 2 / 3].iter()),
+    );
     let second_set = generate_email_set(
-        archives.iter()
-        .flat_map(|&(_, emails)| emails[emails.len() / 3..].iter()));
+        archives
+            .iter()
+            .flat_map(|&(_, emails)| emails[emails.len() / 3..].iter()),
+    );
     assert!(!initial_set.is_empty());
     assert!(!second_set.is_empty());
     assert!(!initial_set.is_disjoint(&second_set));
@@ -359,20 +377,21 @@ fn incremental_packing() {
     check_maildir(&maildir, HashMap::new()).unwrap();
 
     /* Collect current content of packed */
-    let expected_backup = archives.iter()
+    let expected_backup = archives
+        .iter()
         .map(|&(&archive, _)| {
             let file_name = format!("{}{}", archive, ARCHIVE_SUFFIX);
             let path = maildir.packed_dir.join(file_name);
             let file = File::open(path).unwrap();
             let hash = hash_content(file).unwrap();
             (archive, hash)
-        }).collect();
+        })
+        .collect();
 
     /* Second packing */
     maildir.fill_maildir(second_set.iter()).unwrap();
     maildir.execute_packing();
-    let merged = second_set.union(&initial_set)
-        .map(|&email| email).collect();
+    let merged = second_set.union(&initial_set).map(|&email| email).collect();
     let expected = generate_expected_result(&merged);
     check_packed(&maildir, expected, expected_backup).unwrap();
     check_maildir(&maildir, HashMap::new()).unwrap();

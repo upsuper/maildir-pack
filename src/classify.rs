@@ -7,14 +7,14 @@ fn get_archive_name(dt: &Option<DateTime<FixedOffset>>) -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
-pub fn classify_emails(list: Vec<(PathBuf, Option<DateTime<FixedOffset>>)>)
-    -> HashMap<String, Vec<PathBuf>>
-{
+pub fn classify_emails(
+    list: Vec<(PathBuf, Option<DateTime<FixedOffset>>)>,
+) -> HashMap<String, Vec<PathBuf>> {
     let mut map = HashMap::new();
     for (path, dt) in list.into_iter() {
         map.entry(get_archive_name(&dt))
-           .or_insert_with(|| vec![])
-           .push(path);
+            .or_insert_with(|| vec![])
+            .push(path);
     }
     map
 }

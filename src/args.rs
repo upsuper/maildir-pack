@@ -7,7 +7,7 @@ pub struct Args {
     /// The directory we put packed archives in, which is maildir/packed.
     pub packed_dir: PathBuf,
     /// Whether we should show any progress.
-    pub quiet : bool,
+    pub quiet: bool,
 }
 
 impl Args {
