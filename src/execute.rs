@@ -4,6 +4,8 @@ use std::collections::HashMap;
 use std::io::{self, Read, Write};
 use std::ffi::{OsStr, OsString};
 use std::fs::{self, File};
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use tar::{self, Archive as TarArchive, Builder as TarBuilder};
 use utils;
@@ -40,12 +42,23 @@ where
     Ok(())
 }
 
+#[cfg(unix)]
+fn set_archive_permission(file: &File) -> io::Result<()> {
+    let mut perms = file.metadata()?.permissions();
+    let mode = (perms.mode() & !0o777) | 0o600;
+    perms.set_mode(mode);
+    file.set_permissions(perms)
+}
+
 fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> io::Result<()> {
     let archive_name = format!("{}.tar.xz", name);
     let archive_path = args.packed_dir.join(&archive_name);
 
     let tmp_path = args.packed_dir.join(format!("{}.tmp", &archive_name));
     let tmp_file = File::create(&tmp_path)?;
+    #[cfg(unix)]
+    set_archive_permission(&tmp_file)?;
+
     let xz_writer = XzEncoder::new(tmp_file, 9);
     let mut tar_builder = TarBuilder::new(xz_writer);
     tar_builder.mode(tar::HeaderMode::Deterministic);

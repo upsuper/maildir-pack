@@ -15,6 +15,8 @@ use std::fs::{self, File};
 use std::io::{self, Read};
 use std::mem;
 use std::ops::Deref;
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tar::Archive as TarArchive;
@@ -240,8 +242,15 @@ fn check_packed(
                 Some(content) => content,
                 None => report_unexpected_file(),
             };
-            // Read the archive and check the content.
             let file = File::open(&archive)?;
+            // Check the permission.
+            #[cfg(unix)]
+            assert_eq!(
+                file.metadata()?.permissions().mode() & 0o777,
+                0o600,
+                "Archive file should use mode 0o600"
+            );
+            // Read the archive and check the content.
             let xz_reader = XzDecoder::new(file);
             let mut tar_archive = TarArchive::new(xz_reader);
             for entry in tar_archive.entries()? {
