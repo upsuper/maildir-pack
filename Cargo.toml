@@ -9,7 +9,7 @@ keywords = ["email", "maildir"]
 repository = "https://github.com/upsuper/maildir-pack"
 
 [dependencies]
-chrono = { git = "https://github.com/chronotope/chrono" }
+chrono = "0.4.2"
 clap = "2.29.0"
 indicatif = "0.9.0"
 rayon = "1.0.0"
