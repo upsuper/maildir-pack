@@ -29,9 +29,7 @@ const ARCHIVE_SUFFIX: &'static str = ".tar.xz";
 const BACKUP_SUFFIX: &'static str = ".tar.xz.bak";
 
 lazy_static! {
-    static ref KEEP_TEST_DIR: bool = {
-        env::var("KEEP_TEST_DIR").is_ok()
-    };
+    static ref KEEP_TEST_DIR: bool = { env::var("KEEP_TEST_DIR").is_ok() };
     static ref BIN_PATH: PathBuf = {
         let exe = env::current_exe().unwrap();
         let mut path = exe.parent().unwrap().to_path_buf();
@@ -46,12 +44,8 @@ lazy_static! {
         path.push("emails");
         path
     };
-    static ref ALL_EMAILS: HashMap<&'static str, Vec<&'static Path>> = {
-        list_emails().unwrap()
-    };
-    static ref EMAIL_HASHS: HashMap<&'static Path, HashResult> = {
-        hash_emails().unwrap()
-    };
+    static ref ALL_EMAILS: HashMap<&'static str, Vec<&'static Path>> = { list_emails().unwrap() };
+    static ref EMAIL_HASHS: HashMap<&'static Path, HashResult> = { hash_emails().unwrap() };
 }
 
 fn list_emails() -> io::Result<HashMap<&'static str, Vec<&'static Path>>> {
@@ -268,11 +262,9 @@ fn check_packed(
                 // Calculate actual hash of the content.
                 let hash = hash_content(entry)?;
                 assert_eq!(
-                    hash,
-                    expected_hash,
+                    hash, expected_hash,
                     "Content of file {:?} in archive {} mismatches",
-                    file_name,
-                    archive_name
+                    file_name, archive_name
                 );
             }
             // Check that no file left.
@@ -289,8 +281,7 @@ fn check_packed(
             };
             let hash = hash_content(File::open(&archive)?)?;
             assert_eq!(
-                hash,
-                expected_hash,
+                hash, expected_hash,
                 "Content of backup file {:?} mismatches",
                 archive_name
             );
@@ -326,8 +317,7 @@ fn check_maildir(
         // Calculate actual hash of the content.
         let hash = hash_content(File::open(&file)?)?;
         assert_eq!(
-            hash,
-            expected_hash,
+            hash, expected_hash,
             "Content of file {:?} in maildir/new mismatches",
             file_name
         );

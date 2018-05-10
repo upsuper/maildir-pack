@@ -11,8 +11,8 @@ mod args;
 mod classify;
 mod collect;
 mod execute;
-mod verify;
 mod utils;
+mod verify;
 
 use args::Args;
 use std::fs;
@@ -28,7 +28,7 @@ fn do_main(args: &Args) -> io::Result<()> {
             if !args.quiet {
                 eprintln!($msg);
             }
-        }
+        };
     }
 
     report!("Listing emails...");

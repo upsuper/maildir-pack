@@ -1,9 +1,9 @@
 use args::Args;
 use rayon::prelude::*;
 use std::collections::HashMap;
-use std::io::{self, Read, Write};
 use std::ffi::{OsStr, OsString};
 use std::fs::{self, File};
+use std::io::{self, Read, Write};
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
