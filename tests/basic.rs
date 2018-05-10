@@ -81,7 +81,7 @@ fn list_emails() -> io::Result<HashMap<&'static str, Vec<&'static Path>>> {
     Ok(result)
 }
 
-fn hash_content<R: Read>(mut reader: R) -> io::Result<HashResult> {
+fn hash_content(mut reader: impl Read) -> io::Result<HashResult> {
     let mut hasher = Sha256::new();
     let mut buf: [u8; 4096] = unsafe { mem::uninitialized() };
     loop {
@@ -134,11 +134,7 @@ impl TempMaildir {
         self.tmp_dir.as_ref().unwrap().path()
     }
 
-    fn fill_maildir<I, P>(&self, emails: I) -> io::Result<()>
-    where
-        I: Iterator<Item = P>,
-        P: AsRef<Path>,
-    {
+    fn fill_maildir(&self, emails: impl Iterator<Item = impl AsRef<Path>>) -> io::Result<()> {
         for email in emails {
             let email = email.as_ref();
             fs::copy(email, self.new_dir.join(email.file_name().unwrap()))?;
@@ -168,11 +164,9 @@ impl Drop for TempMaildir {
     }
 }
 
-fn generate_email_set<I, P>(iter: I) -> HashSet<&'static Path>
-where
-    I: Iterator<Item = P>,
-    P: Deref<Target = &'static Path>,
-{
+fn generate_email_set(
+    iter: impl Iterator<Item = impl Deref<Target = &'static Path>>,
+) -> HashSet<&'static Path> {
     iter.map(|email| *email.deref()).collect()
 }
 
@@ -200,7 +194,7 @@ fn generate_expected_result(
         .collect()
 }
 
-fn join_names<'a, I: Iterator<Item = &'a str>>(mut iter: I) -> String {
+fn join_names<'a>(mut iter: impl Iterator<Item = &'a str>) -> String {
     let mut result = String::new();
     if let Some(first) = iter.next() {
         result.push_str(first);

@@ -17,14 +17,11 @@ fn get_file_name(path: &Path) -> &OsStr {
     path.file_name().expect("Unexpected path")
 }
 
-fn fill_archive_from<W>(
+fn fill_archive_from(
     src: File,
-    builder: &mut TarBuilder<W>,
+    builder: &mut TarBuilder<impl Write>,
     files: &mut HashMap<OsString, HashResult>,
-) -> io::Result<()>
-where
-    W: Write,
-{
+) -> io::Result<()> {
     let xz_reader = XzDecoder::new(src);
     let mut tar_archive = TarArchive::new(xz_reader);
     for entry in tar_archive.entries()? {

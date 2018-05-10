@@ -18,11 +18,9 @@ use args::Args;
 use std::fs;
 use std::io;
 
-fn main() {
-    do_main(&Args::parse_args()).unwrap();
-}
+fn main() -> io::Result<()> {
+    let args = Args::parse_args();
 
-fn do_main(args: &Args) -> io::Result<()> {
     macro_rules! report {
         ($msg:expr) => {
             if !args.quiet {
@@ -32,14 +30,14 @@ fn do_main(args: &Args) -> io::Result<()> {
     }
 
     report!("Listing emails...");
-    let list = collect::list_emails(args)?;
+    let list = collect::list_emails(&args)?;
 
     report!("Classifying emails...");
     let map = classify::classify_emails(list);
 
     report!("Archiving emails...");
     fs::create_dir_all(&args.packed_dir)?;
-    execute::archive_emails(args, map);
+    execute::archive_emails(&args, map);
 
     Ok(())
 }
