@@ -52,7 +52,8 @@ fn get_datetime_from_email(file: &Path) -> io::Result<Option<DateTime<FixedOffse
             date = Some(line[DATE_HEADER.len()..].to_string());
         }
     }
-    Ok(date.as_ref()
+    Ok(date
+        .as_ref()
         .map(|date| normalize_datetime(date.trim()))
         .and_then(|dt_str| DateTime::parse_from_rfc2822(&dt_str).ok()))
 }
@@ -78,8 +79,7 @@ pub fn list_emails(args: &Args) -> io::Result<Vec<(PathBuf, Option<DateTime<Fixe
                 progress.inc(128);
             }
             (path, dt)
-        })
-        .collect();
+        }).collect();
     progress.finish_and_clear();
 
     Ok(result)

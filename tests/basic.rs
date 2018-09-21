@@ -183,15 +183,13 @@ fn generate_expected_result(
                     let file_name = email.file_name().unwrap();
                     let hash = EMAIL_HASHS[email];
                     (file_name, hash)
-                })
-                .collect::<HashMap<_, _>>();
+                }).collect::<HashMap<_, _>>();
             if !expected_content.is_empty() {
                 Some((archive, expected_content))
             } else {
                 None
             }
-        })
-        .collect()
+        }).collect()
 }
 
 fn join_names<'a>(mut iter: impl Iterator<Item = &'a str>) -> String {
@@ -378,8 +376,7 @@ fn incremental_packing() {
             let file = File::open(path).unwrap();
             let hash = hash_content(file).unwrap();
             (archive, hash)
-        })
-        .collect();
+        }).collect();
 
     /* Second packing */
     maildir.fill_maildir(second_set.iter()).unwrap();
