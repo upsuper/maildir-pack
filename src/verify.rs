@@ -13,7 +13,7 @@ impl<R: Read> StreamHasher<R> {
     pub fn new(input: R) -> Self {
         StreamHasher {
             hasher: Sha512::default(),
-            input: input,
+            input,
         }
     }
 

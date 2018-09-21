@@ -70,7 +70,7 @@ fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> io::Result<()> {
 
     // Adding emails to the archive.
     let existing_files = existing_files;
-    for email in emails.iter() {
+    for email in &emails {
         let file_name = get_file_name(email);
         let mut file = File::open(email)?;
         if let Some(expected_hash) = existing_files.get(file_name) {
@@ -103,6 +103,8 @@ fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> io::Result<()> {
     emails
         .par_iter()
         .for_each(|email| fs::remove_file(email).unwrap());
+    // Explicitly drop to silence clippy.
+    drop(emails);
 
     Ok(())
 }

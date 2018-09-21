@@ -11,7 +11,7 @@ pub fn classify_emails(
     list: Vec<(PathBuf, Option<DateTime<FixedOffset>>)>,
 ) -> HashMap<String, Vec<PathBuf>> {
     let mut map = HashMap::new();
-    for (path, dt) in list.into_iter() {
+    for (path, dt) in list {
         map.entry(get_archive_name(&dt))
             .or_insert_with(|| vec![])
             .push(path);

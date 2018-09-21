@@ -9,8 +9,8 @@ use utils;
 
 fn normalize_datetime(mut dt: &str) -> Cow<str> {
     // Trailing commentary timezone info is not recognized.
-    if dt.ends_with(")") {
-        if let Some(pos) = dt.rfind("(") {
+    if dt.ends_with(')') {
+        if let Some(pos) = dt.rfind('(') {
             dt = &dt[..pos];
         }
     }
