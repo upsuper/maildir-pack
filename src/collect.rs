@@ -32,7 +32,7 @@ fn is_wsp(b: u8) -> bool {
 }
 
 fn get_datetime_from_email(file: &Path) -> io::Result<Option<DateTime<FixedOffset>>> {
-    const DATE_HEADER: &[u8] = b"Date: ";
+    const DATE_HEADER: &[u8] = b"date: ";
     let reader = BufReader::new(File::open(file)?);
     let mut date: Option<Vec<u8>> = None;
     for line in reader.split(b'\n') {
@@ -47,7 +47,9 @@ fn get_datetime_from_email(file: &Path) -> io::Result<Option<DateTime<FixedOffse
             }
             date.as_mut().unwrap().extend(line);
         } else {
-            if !line.starts_with(DATE_HEADER) {
+            if line.len() <= DATE_HEADER.len()
+                || !line[..DATE_HEADER.len()].eq_ignore_ascii_case(DATE_HEADER)
+            {
                 continue;
             }
             date = Some(line[DATE_HEADER.len()..].to_vec());
