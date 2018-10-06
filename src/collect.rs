@@ -5,6 +5,7 @@ use std::borrow::Cow;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
 use std::path::{Path, PathBuf};
+use std::str;
 use utils;
 
 fn normalize_datetime(mut dt: &str) -> Cow<str> {
@@ -31,29 +32,30 @@ fn is_wsp(b: u8) -> bool {
 }
 
 fn get_datetime_from_email(file: &Path) -> io::Result<Option<DateTime<FixedOffset>>> {
-    const DATE_HEADER: &str = "Date: ";
+    const DATE_HEADER: &[u8] = b"Date: ";
     let reader = BufReader::new(File::open(file)?);
-    let mut date: Option<String> = None;
-    for line in reader.lines() {
+    let mut date: Option<Vec<u8>> = None;
+    for line in reader.split(b'\n') {
         let line = line?;
         if line.is_empty() {
             break;
         }
         if date.is_some() {
             // Line breaks can be folded with whitespaces.
-            if !is_wsp(line.as_bytes()[0]) {
+            if !is_wsp(line[0]) {
                 break;
             }
-            date.as_mut().unwrap().push_str(&line);
+            date.as_mut().unwrap().extend(line);
         } else {
             if !line.starts_with(DATE_HEADER) {
                 continue;
             }
-            date = Some(line[DATE_HEADER.len()..].to_string());
+            date = Some(line[DATE_HEADER.len()..].to_vec());
         }
     }
     Ok(date
         .as_ref()
+        .and_then(|date| str::from_utf8(date).ok())
         .map(|date| normalize_datetime(date.trim()))
         .and_then(|dt_str| DateTime::parse_from_rfc2822(&dt_str).ok()))
 }
