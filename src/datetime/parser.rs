@@ -91,7 +91,7 @@ fn year<'a>() -> impl Parser<Input = &'a [u8], Output = i32> {
             }
             let mut year = s
                 .iter()
-                .fold(0, |year, digit| year * 10 + (digit - b'0') as i32);
+                .fold(0, |year, digit| year * 10 + i32::from(digit - b'0'));
             if s.len() == 2 {
                 if year < 50 {
                     year += 2000;
@@ -122,7 +122,7 @@ fn time_of_day<'a>() -> impl Parser<Input = &'a [u8], Output = NaiveTime> {
         .and_then(|(hour, _, minute, second)| {
             let (second, milli) = match second.map(|(_, s)| s).unwrap_or(0) {
                 sec @ 0...59 => (sec, 0),
-                sec @ _ => (59, (sec - 59) * 1_000),
+                sec => (59, (sec - 59) * 1_000),
             };
             NaiveTime::from_hms_milli_opt(hour, minute, second, milli)
                 .ok_or(UnexpectedParse::Unexpected)
