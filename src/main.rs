@@ -1,6 +1,7 @@
 extern crate chrono;
 #[macro_use]
 extern crate clap;
+extern crate combine;
 extern crate indicatif;
 extern crate rayon;
 extern crate sha2;
@@ -10,6 +11,7 @@ extern crate xz2;
 mod args;
 mod classify;
 mod collect;
+mod datetime;
 mod execute;
 mod utils;
 mod verify;

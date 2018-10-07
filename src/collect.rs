@@ -1,29 +1,11 @@
 use args::Args;
 use chrono::{DateTime, FixedOffset};
+use datetime::parse_datetime;
 use rayon::prelude::*;
-use std::borrow::Cow;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
 use std::path::{Path, PathBuf};
-use std::str;
 use utils;
-
-fn normalize_datetime(mut dt: &str) -> Cow<str> {
-    // Trailing commentary timezone info is not recognized.
-    if dt.ends_with(')') {
-        if let Some(pos) = dt.rfind('(') {
-            dt = &dt[..pos];
-        }
-    }
-    // Trim whitespaces.
-    dt = dt.trim();
-    // -0000 timezone cannot be parsed. Let's just treat it as +0000.
-    if dt.ends_with("-0000") {
-        Cow::Owned(format!("{}+0000", &dt[..dt.len() - 5]))
-    } else {
-        Cow::Borrowed(dt)
-    }
-}
 
 /// Whether the given byte is a WSP as defined in RFC 5234 Appendix B.1
 /// https://tools.ietf.org/html/rfc5234#appendix-B.1
@@ -55,11 +37,7 @@ fn get_datetime_from_email(file: &Path) -> io::Result<Option<DateTime<FixedOffse
             date = Some(line[DATE_HEADER.len()..].to_vec());
         }
     }
-    Ok(date
-        .as_ref()
-        .and_then(|date| str::from_utf8(date).ok())
-        .map(|date| normalize_datetime(date.trim()))
-        .and_then(|dt_str| DateTime::parse_from_rfc2822(&dt_str).ok()))
+    Ok(date.as_ref().and_then(|dt| parse_datetime(dt)))
 }
 
 pub fn list_emails(args: &Args) -> io::Result<Vec<(PathBuf, Option<DateTime<FixedOffset>>)>> {
@@ -87,25 +65,4 @@ pub fn list_emails(args: &Args) -> io::Result<Vec<(PathBuf, Option<DateTime<Fixe
     progress.finish_and_clear();
 
     Ok(result)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_normalize_datetime() {
-        assert_eq!(
-            normalize_datetime("Thu, 29 Sep 2016 23:18:26 +0000"),
-            "Thu, 29 Sep 2016 23:18:26 +0000"
-        );
-        assert_eq!(
-            normalize_datetime("Tue, 11 Jul 2017 18:30:33 +0000 (UTC)"),
-            "Tue, 11 Jul 2017 18:30:33 +0000"
-        );
-        assert_eq!(
-            normalize_datetime("Sat, 01 Oct 2016 14:47:20 -0000"),
-            "Sat, 01 Oct 2016 14:47:20 +0000"
-        );
-    }
 }
