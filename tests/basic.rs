@@ -294,31 +294,8 @@ fn check_packed(
     Ok(())
 }
 
-fn check_maildir(
-    maildir: &TempMaildir,
-    mut expected: HashMap<&OsStr, HashResult>,
-) -> io::Result<()> {
-    for file in fs::read_dir(&maildir.new_dir)? {
-        let file = file?.path();
-        let file_name = file.file_name().unwrap();
-        // Retrieve the expected hash.
-        let expected_hash = match expected.remove(file_name) {
-            Some(hash) => hash,
-            None => panic!("Unexpected file {:?} in maildir/new", file_name),
-        };
-        // Calculate actual hash of the content.
-        let hash = hash_content(File::open(&file)?)?;
-        assert_eq!(
-            hash, expected_hash,
-            "Content of file {:?} in maildir/new mismatches",
-            file_name
-        );
-    }
-    // Check that no file left.
-    if expected.len() > 0 {
-        let files = join_names(expected.keys().map(|&name| name.to_str().unwrap()));
-        panic!("Files not found in maildir/new: {}", files);
-    }
+fn check_empty_maildir(maildir: &TempMaildir) -> io::Result<()> {
+    assert_eq!(maildir.new_dir.read_dir()?.count(), 0, "Unexpected file in maildir/new");
     Ok(())
 }
 
@@ -334,7 +311,7 @@ fn basic_packing() -> io::Result<()> {
     let expected = generate_expected_result(&emails);
     check_packed(&maildir, expected, HashMap::new())?;
     // Check that maildir is empty now.
-    check_maildir(&maildir, HashMap::new())
+    check_empty_maildir(&maildir)
 }
 
 #[test]
@@ -365,7 +342,7 @@ fn incremental_packing() -> io::Result<()> {
     maildir.execute_packing();
     let expected = generate_expected_result(&initial_set);
     check_packed(&maildir, expected, HashMap::new())?;
-    check_maildir(&maildir, HashMap::new())?;
+    check_empty_maildir(&maildir)?;
 
     /* Collect current content of packed */
     let expected_backup = archives
@@ -384,5 +361,5 @@ fn incremental_packing() -> io::Result<()> {
     let merged = second_set.union(&initial_set).map(|&email| email).collect();
     let expected = generate_expected_result(&merged);
     check_packed(&maildir, expected, expected_backup)?;
-    check_maildir(&maildir, HashMap::new())
+    check_empty_maildir(&maildir)
 }
