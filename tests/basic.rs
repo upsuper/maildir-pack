@@ -323,23 +323,23 @@ fn check_maildir(
 }
 
 #[test]
-fn basic_packing() {
-    let maildir = TempMaildir::new("basic_packing").unwrap();
+fn basic_packing() -> io::Result<()> {
+    let maildir = TempMaildir::new("basic_packing")?;
     // Copy all emails into the new dir.
     let emails = generate_email_set(ALL_EMAILS.values().flat_map(|l| l.iter()));
-    maildir.fill_maildir(emails.iter()).unwrap();
+    maildir.fill_maildir(emails.iter())?;
     // Pack the maildir.
     maildir.execute_packing();
     // Check the result.
     let expected = generate_expected_result(&emails);
-    check_packed(&maildir, expected, HashMap::new()).unwrap();
+    check_packed(&maildir, expected, HashMap::new())?;
     // Check that maildir is empty now.
-    check_maildir(&maildir, HashMap::new()).unwrap();
+    check_maildir(&maildir, HashMap::new())
 }
 
 #[test]
-fn incremental_packing() {
-    let maildir = TempMaildir::new("incremental_packing").unwrap();
+fn incremental_packing() -> io::Result<()> {
+    let maildir = TempMaildir::new("incremental_packing")?;
     // Generate test sets.
     let archives: Vec<_> = ALL_EMAILS
         .iter()
@@ -361,11 +361,11 @@ fn incremental_packing() {
     assert!(!initial_set.is_superset(&second_set));
 
     /* Initial packing */
-    maildir.fill_maildir(initial_set.iter()).unwrap();
+    maildir.fill_maildir(initial_set.iter())?;
     maildir.execute_packing();
     let expected = generate_expected_result(&initial_set);
-    check_packed(&maildir, expected, HashMap::new()).unwrap();
-    check_maildir(&maildir, HashMap::new()).unwrap();
+    check_packed(&maildir, expected, HashMap::new())?;
+    check_maildir(&maildir, HashMap::new())?;
 
     /* Collect current content of packed */
     let expected_backup = archives
@@ -373,16 +373,16 @@ fn incremental_packing() {
         .map(|&(&archive, _)| {
             let file_name = format!("{}{}", archive, ARCHIVE_SUFFIX);
             let path = maildir.packed_dir.join(file_name);
-            let file = File::open(path).unwrap();
-            let hash = hash_content(file).unwrap();
-            (archive, hash)
-        }).collect();
+            let file = File::open(path)?;
+            let hash = hash_content(file)?;
+            Ok((archive, hash))
+        }).collect::<io::Result<_>>()?;
 
     /* Second packing */
-    maildir.fill_maildir(second_set.iter()).unwrap();
+    maildir.fill_maildir(second_set.iter())?;
     maildir.execute_packing();
     let merged = second_set.union(&initial_set).map(|&email| email).collect();
     let expected = generate_expected_result(&merged);
-    check_packed(&maildir, expected, expected_backup).unwrap();
-    check_maildir(&maildir, HashMap::new()).unwrap();
+    check_packed(&maildir, expected, expected_backup)?;
+    check_maildir(&maildir, HashMap::new())
 }
