@@ -21,6 +21,11 @@ matrix:
       rust: nightly
       env: TARGET=x86_64-unknown-linux-gnu
 
+cache: cargo
+
+before_cache:
+  - bash ci/cleanup_for_cache.sh
+
 script:
   - cargo build --target "$TARGET" --verbose
   - cargo test --target "$TARGET" --verbose
