@@ -163,7 +163,8 @@ fn obs_zone<'a>() -> impl Parser<Input = &'a [u8], Output = FixedOffset> {
         b"mdt" => -6,
         b"pst" => -8,
         b"pdt" => -7,
-    }).map(|hour| FixedOffset::east(hour * 3600))
+    })
+    .map(|hour| FixedOffset::east(hour * 3600))
 }
 
 fn one_or_two_digits_with_cfws<'a>() -> impl Parser<Input = &'a [u8], Output = u32> {

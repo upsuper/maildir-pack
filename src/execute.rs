@@ -1,6 +1,6 @@
 use crate::args::Args;
-use crate::verify::{HashResult, StreamHasher};
 use crate::utils;
+use crate::verify::{HashResult, StreamHasher};
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};

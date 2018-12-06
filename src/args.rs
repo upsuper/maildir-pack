@@ -19,7 +19,8 @@ impl Args {
             (about: "Pack mails from a maildir into archives")
             (@arg MAILDIR: +required "Path to the maildir")
             (@arg quiet: -q --quiet "Suppress any progress output")
-        ).get_matches();
+        )
+        .get_matches();
 
         let maildir = matches.value_of("MAILDIR").unwrap();
         let maildir = Path::new(maildir);

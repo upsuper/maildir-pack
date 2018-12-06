@@ -61,7 +61,8 @@ pub fn list_emails(args: &Args) -> io::Result<Vec<(PathBuf, Option<DateTime<Fixe
                 progress.inc(128);
             }
             (path, dt)
-        }).collect();
+        })
+        .collect();
     progress.finish_and_clear();
 
     Ok(result)

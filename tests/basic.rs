@@ -175,13 +175,15 @@ fn generate_expected_result(
                     let file_name = email.file_name().unwrap();
                     let hash = EMAIL_HASHS[email];
                     (file_name, hash)
-                }).collect::<HashMap<_, _>>();
+                })
+                .collect::<HashMap<_, _>>();
             if !expected_content.is_empty() {
                 Some((archive, expected_content))
             } else {
                 None
             }
-        }).collect()
+        })
+        .collect()
 }
 
 fn join_names<'a>(mut iter: impl Iterator<Item = &'a str>) -> String {
@@ -287,7 +289,11 @@ fn check_packed(
 }
 
 fn check_empty_maildir(maildir: &TempMaildir) -> io::Result<()> {
-    assert_eq!(maildir.new_dir.read_dir()?.count(), 0, "Unexpected file in maildir/new");
+    assert_eq!(
+        maildir.new_dir.read_dir()?.count(),
+        0,
+        "Unexpected file in maildir/new"
+    );
     Ok(())
 }
 
@@ -345,7 +351,8 @@ fn incremental_packing() -> io::Result<()> {
             let file = File::open(path)?;
             let hash = hash_content(file)?;
             Ok((archive, hash))
-        }).collect::<io::Result<_>>()?;
+        })
+        .collect::<io::Result<_>>()?;
 
     /* Second packing */
     maildir.fill_maildir(second_set.iter())?;
