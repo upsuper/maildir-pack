@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use leak::Leak;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
