@@ -1,4 +1,4 @@
-use args::Args;
+use crate::args::Args;
 use indicatif::ProgressBar;
 
 pub fn create_progress_bar(args: &Args, len: usize) -> ProgressBar {

@@ -1,11 +1,3 @@
-#[macro_use]
-extern crate lazy_static;
-extern crate leak;
-extern crate sha2;
-extern crate tar;
-extern crate tempdir;
-extern crate xz2;
-
 use leak::Leak;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};

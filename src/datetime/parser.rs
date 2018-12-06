@@ -4,7 +4,7 @@ use combine::{
     parser::{
         byte::{bytes_cmp, digit, spaces},
         choice::{choice, optional},
-        combinator::try,
+        combinator::r#try,
         item::{item, none_of, one_of},
         range::recognize,
         repeat::{skip_many, skip_many1},
@@ -32,7 +32,7 @@ pub fn date_time<'a>() -> impl Parser<Input = &'a [u8], Output = DateTime<FixedO
 macro_rules! choice_literal {
     ($($s:expr => $v:expr,)+) => {
         choice((
-            $(try(bytes_cmp($s, |l, r| l.eq_ignore_ascii_case(&r))).map(|_| $v),)+
+            $(r#try(bytes_cmp($s, |l, r| l.eq_ignore_ascii_case(&r))).map(|_| $v),)+
         ))
     }
 }

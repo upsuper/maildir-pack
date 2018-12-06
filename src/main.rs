@@ -1,13 +1,3 @@
-extern crate chrono;
-#[macro_use]
-extern crate clap;
-extern crate combine;
-extern crate indicatif;
-extern crate rayon;
-extern crate sha2;
-extern crate tar;
-extern crate xz2;
-
 mod args;
 mod classify;
 mod collect;
@@ -16,7 +6,7 @@ mod execute;
 mod utils;
 mod verify;
 
-use args::Args;
+use crate::args::Args;
 use std::fs;
 use std::io;
 

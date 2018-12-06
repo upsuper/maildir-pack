@@ -1,11 +1,11 @@
-use args::Args;
+use crate::args::Args;
+use crate::datetime::parse_datetime;
+use crate::utils;
 use chrono::{DateTime, FixedOffset};
-use datetime::parse_datetime;
 use rayon::prelude::*;
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
 use std::path::{Path, PathBuf};
-use utils;
 
 /// Whether the given byte is a WSP as defined in RFC 5234 Appendix B.1
 /// https://tools.ietf.org/html/rfc5234#appendix-B.1

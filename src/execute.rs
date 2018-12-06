@@ -1,4 +1,6 @@
-use args::Args;
+use crate::args::Args;
+use crate::verify::{HashResult, StreamHasher};
+use crate::utils;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
@@ -8,8 +10,6 @@ use std::io::{self, Read, Write};
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use tar::{self, Archive as TarArchive, Builder as TarBuilder};
-use utils;
-use verify::{HashResult, StreamHasher};
 use xz2::read::XzDecoder;
 use xz2::write::XzEncoder;
 
