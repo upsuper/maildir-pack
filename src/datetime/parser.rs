@@ -121,7 +121,7 @@ fn time_of_day<'a>() -> impl Parser<Input = &'a [u8], Output = NaiveTime> {
     )
         .and_then(|(hour, _, minute, second)| {
             let (second, milli) = match second.map(|(_, s)| s).unwrap_or(0) {
-                sec @ 0...59 => (sec, 0),
+                sec @ 0..=59 => (sec, 0),
                 sec => (59, (sec - 59) * 1_000),
             };
             NaiveTime::from_hms_milli_opt(hour, minute, second, milli)
