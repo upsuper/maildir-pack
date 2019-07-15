@@ -6,7 +6,6 @@ use std::env;
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{self, Read};
-use std::mem;
 use std::ops::Deref;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
@@ -76,7 +75,7 @@ fn list_emails() -> io::Result<HashMap<&'static str, Vec<&'static Path>>> {
 
 fn hash_content(mut reader: impl Read) -> io::Result<HashResult> {
     let mut hasher = Sha256::new();
-    let mut buf: [u8; 4096] = unsafe { mem::uninitialized() };
+    let mut buf = [0; 4096];
     loop {
         let len = reader.read(&mut buf)?;
         if len == 0 {
