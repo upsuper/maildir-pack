@@ -1,3 +1,4 @@
+use assert_cmd::prelude::*;
 use lazy_static::lazy_static;
 use leak::Leak;
 use sha2::{Digest, Sha256};
@@ -22,13 +23,6 @@ const BACKUP_SUFFIX: &'static str = ".tar.xz.bak";
 
 lazy_static! {
     static ref KEEP_TEST_DIR: bool = { env::var("KEEP_TEST_DIR").is_ok() };
-    static ref BIN_PATH: PathBuf = {
-        let exe = env::current_exe().unwrap();
-        let mut path = exe.parent().unwrap().to_path_buf();
-        path.set_file_name(env!("CARGO_PKG_NAME"));
-        path.set_extension(env::consts::EXE_EXTENSION);
-        path
-    };
     static ref EMAILS_PATH: PathBuf = {
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
         let mut path = Path::new(manifest_dir).to_path_buf();
@@ -135,12 +129,12 @@ impl TempMaildir {
     }
 
     fn execute_packing(&self) {
-        let result = Command::new(&*BIN_PATH)
+        Command::cargo_bin(env!("CARGO_PKG_NAME"))
+            .unwrap()
             .arg("--quiet")
             .arg(self.path())
-            .status()
-            .expect("Failed to execute");
-        assert!(result.success());
+            .assert()
+            .success();
     }
 }
 
