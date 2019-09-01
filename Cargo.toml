@@ -3,11 +3,12 @@ name = "maildir-pack"
 description = "Pack maildir into archive files"
 version = "0.1.0"
 authors = ["Xidorn Quan <me@upsuper.org>"]
-license = "MIT"
+license = "GPL-3.0-or-later"
 categories = ["command-line-utilities", "email"]
 keywords = ["email", "maildir"]
 repository = "https://github.com/upsuper/maildir-pack"
 edition = "2018"
+publish = false
 
 [dependencies]
 chrono = "0.4.2"
