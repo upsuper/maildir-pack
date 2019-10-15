@@ -7,10 +7,10 @@ mod utils;
 mod verify;
 
 use crate::args::Args;
+use anyhow::Result;
 use std::fs;
-use std::io;
 
-fn main() -> io::Result<()> {
+fn main() -> Result<()> {
     let args = Args::parse_args();
 
     macro_rules! report {

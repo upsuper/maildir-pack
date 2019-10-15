@@ -1,10 +1,11 @@
 use crate::args::Args;
 use crate::datetime::parse_datetime;
 use crate::utils;
+use anyhow::{Context, Result};
 use chrono::{DateTime, FixedOffset};
 use rayon::prelude::*;
 use std::fs::{self, File};
-use std::io::{self, BufRead, BufReader};
+use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
 /// Whether the given byte is a WSP as defined in RFC 5234 Appendix B.1
@@ -13,9 +14,11 @@ fn is_wsp(b: u8) -> bool {
     b == 0x20 || b == 0x09
 }
 
-fn get_datetime_from_email(file: &Path) -> io::Result<Option<DateTime<FixedOffset>>> {
+fn get_datetime_from_email(file: &Path) -> Result<Option<DateTime<FixedOffset>>> {
     const DATE_HEADER: &[u8] = b"date: ";
-    let reader = BufReader::new(File::open(file)?);
+    let file =
+        File::open(file).with_context(|| format!("failed to open {:?}", file.file_name()))?;
+    let reader = BufReader::new(file);
     let mut date: Option<Vec<u8>> = None;
     for line in reader.split(b'\n') {
         let line = line?;
@@ -40,7 +43,7 @@ fn get_datetime_from_email(file: &Path) -> io::Result<Option<DateTime<FixedOffse
     Ok(date.as_ref().and_then(|dt| parse_datetime(dt)))
 }
 
-pub fn list_emails(args: &Args) -> io::Result<Vec<(PathBuf, Option<DateTime<FixedOffset>>)>> {
+pub fn list_emails(args: &Args) -> Result<Vec<(PathBuf, Option<DateTime<FixedOffset>>)>> {
     let mut files = vec![];
     for entry in fs::read_dir(&args.maildir.join("new"))? {
         files.push(entry?.path());

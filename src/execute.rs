@@ -1,11 +1,12 @@
 use crate::args::Args;
 use crate::utils;
 use crate::verify::{HashResult, StreamHasher};
+use anyhow::{Context, Result};
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
 use std::fs::{self, File};
-use std::io::{self, Read, Write};
+use std::io::{Read, Write};
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
@@ -21,7 +22,7 @@ fn fill_archive_from(
     src: File,
     builder: &mut TarBuilder<impl Write>,
     files: &mut HashMap<OsString, HashResult>,
-) -> io::Result<()> {
+) -> Result<()> {
     let xz_reader = XzDecoder::new(src);
     let mut tar_archive = TarArchive::new(xz_reader);
     for entry in tar_archive.entries()? {
@@ -31,7 +32,9 @@ fn fill_archive_from(
         let header = entry.header().clone();
         let file_name = get_file_name(&header.path()?).to_os_string();
         let mut hasher = StreamHasher::new(entry);
-        builder.append(&header, &mut hasher)?;
+        builder
+            .append(&header, &mut hasher)
+            .with_context(|| format!("failed to append file {:?}", file_name))?;
         // Add the path to the files map.
         files.insert(file_name, hasher.get_result());
     }
@@ -40,14 +43,15 @@ fn fill_archive_from(
 }
 
 #[cfg(unix)]
-fn set_archive_permission(file: &File) -> io::Result<()> {
+fn set_archive_permission(file: &File) -> Result<()> {
     let mut perms = file.metadata()?.permissions();
     let mode = (perms.mode() & !0o777) | 0o600;
     perms.set_mode(mode);
-    file.set_permissions(perms)
+    file.set_permissions(perms)?;
+    Ok(())
 }
 
-fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> io::Result<()> {
+fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> Result<()> {
     let archive_name = format!("{}.tar.xz", name);
     let archive_path = args.packed_dir.join(&archive_name);
 
@@ -72,7 +76,8 @@ fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> io::Result<()> {
     let existing_files = existing_files;
     for email in &emails {
         let file_name = get_file_name(email);
-        let mut file = File::open(email)?;
+        let mut file =
+            File::open(email).with_context(|| format!("failed to open {:?}", file_name))?;
         if let Some(expected_hash) = existing_files.get(file_name) {
             // The file exists, let's check whether the hash matches.
             let mut hasher = StreamHasher::new(file);
@@ -91,7 +96,9 @@ fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> io::Result<()> {
                 );
             }
         } else {
-            tar_builder.append_file(file_name, &mut file)?;
+            tar_builder
+                .append_file(file_name, &mut file)
+                .with_context(|| format!("failed to append file {:?}", file_name))?;
         }
     }
 
@@ -113,7 +120,9 @@ pub fn archive_emails(args: &Args, map: HashMap<String, Vec<PathBuf>>) {
     let progress = utils::create_progress_bar(args, map.len());
     progress.tick();
     map.into_par_iter().for_each(|(name, emails)| {
-        do_archive(args, &name, emails).unwrap();
+        do_archive(args, &name, emails)
+            .with_context(|| format!("failed to archive {}", name))
+            .unwrap();
         progress.inc(1);
     });
     progress.finish_and_clear();
