@@ -5,16 +5,16 @@ use combine::{
         byte::{bytes_cmp, digit, spaces},
         choice::{choice, optional},
         combinator::attempt,
-        item::{item, none_of, one_of},
         range::recognize,
         repeat::{skip_many, skip_many1},
+        token::{none_of, one_of, token},
     },
     Parser,
 };
 
-pub fn date_time<'a>() -> impl Parser<Input = &'a [u8], Output = DateTime<FixedOffset>> {
+pub fn date_time<'a>() -> impl Parser<&'a [u8], Output = DateTime<FixedOffset>> {
     (
-        optional((day_of_week(), item(b','))),
+        optional((day_of_week(), token(b','))),
         date(),
         time(),
         optional(cfws()),
@@ -37,11 +37,11 @@ macro_rules! choice_literal {
     }
 }
 
-fn day_of_week<'a>() -> impl Parser<Input = &'a [u8], Output = Weekday> {
+fn day_of_week<'a>() -> impl Parser<&'a [u8], Output = Weekday> {
     (optional(cfws()), day_name(), optional(cfws())).map(|(_, day_name, _)| day_name)
 }
 
-fn day_name<'a>() -> impl Parser<Input = &'a [u8], Output = Weekday> {
+fn day_name<'a>() -> impl Parser<&'a [u8], Output = Weekday> {
     choice_literal! {
         b"mon" => Weekday::Mon,
         b"tue" => Weekday::Tue,
@@ -53,7 +53,7 @@ fn day_name<'a>() -> impl Parser<Input = &'a [u8], Output = Weekday> {
     }
 }
 
-fn date<'a>() -> impl Parser<Input = &'a [u8], Output = NaiveDate> {
+fn date<'a>() -> impl Parser<&'a [u8], Output = NaiveDate> {
     (
         one_or_two_digits_with_cfws(), // day
         month(),
@@ -62,7 +62,7 @@ fn date<'a>() -> impl Parser<Input = &'a [u8], Output = NaiveDate> {
         .map(|(day, month, year)| NaiveDate::from_ymd(year, month, day))
 }
 
-fn month<'a>() -> impl Parser<Input = &'a [u8], Output = u32> {
+fn month<'a>() -> impl Parser<&'a [u8], Output = u32> {
     choice_literal! {
         b"jan" => 1,
         b"feb" => 2,
@@ -79,7 +79,7 @@ fn month<'a>() -> impl Parser<Input = &'a [u8], Output = u32> {
     }
 }
 
-fn year<'a>() -> impl Parser<Input = &'a [u8], Output = i32> {
+fn year<'a>() -> impl Parser<&'a [u8], Output = i32> {
     (
         optional(cfws()),
         recognize(skip_many1(digit())),
@@ -103,19 +103,19 @@ fn year<'a>() -> impl Parser<Input = &'a [u8], Output = i32> {
         })
 }
 
-fn time<'a>() -> impl Parser<Input = &'a [u8], Output = (NaiveTime, FixedOffset)> {
+fn time<'a>() -> impl Parser<&'a [u8], Output = (NaiveTime, FixedOffset)> {
     (time_of_day(), zone())
 }
 
-fn time_of_day<'a>() -> impl Parser<Input = &'a [u8], Output = NaiveTime> {
+fn time_of_day<'a>() -> impl Parser<&'a [u8], Output = NaiveTime> {
     // We explicitly allow single digit to be used for hour, minute, and second,
     // which is different from what the spec says.
     (
         one_or_two_digits_with_cfws(), // hour
-        item(b':'),
+        token(b':'),
         one_or_two_digits_with_cfws(), // minute
         optional((
-            item(b':'),
+            token(b':'),
             one_or_two_digits_with_cfws(), // second
         )),
     )
@@ -129,7 +129,7 @@ fn time_of_day<'a>() -> impl Parser<Input = &'a [u8], Output = NaiveTime> {
         })
 }
 
-fn zone<'a>() -> impl Parser<Input = &'a [u8], Output = FixedOffset> {
+fn zone<'a>() -> impl Parser<&'a [u8], Output = FixedOffset> {
     choice((
         (
             spaces(),
@@ -151,7 +151,7 @@ fn zone<'a>() -> impl Parser<Input = &'a [u8], Output = FixedOffset> {
     ))
 }
 
-fn obs_zone<'a>() -> impl Parser<Input = &'a [u8], Output = FixedOffset> {
+fn obs_zone<'a>() -> impl Parser<&'a [u8], Output = FixedOffset> {
     (choice_literal! {
         b"ut" => 0,
         b"gmt" => 0,
@@ -167,7 +167,7 @@ fn obs_zone<'a>() -> impl Parser<Input = &'a [u8], Output = FixedOffset> {
     .map(|hour| FixedOffset::east(hour * 3600))
 }
 
-fn one_or_two_digits_with_cfws<'a>() -> impl Parser<Input = &'a [u8], Output = u32> {
+fn one_or_two_digits_with_cfws<'a>() -> impl Parser<&'a [u8], Output = u32> {
     (
         optional(cfws()),
         digit(),
@@ -187,15 +187,15 @@ fn atoi(a: u8) -> u32 {
     u32::from(a - b'0')
 }
 
-fn cfws<'a>() -> impl Parser<Input = &'a [u8], Output = ()> {
+fn cfws<'a>() -> impl Parser<&'a [u8], Output = ()> {
     (spaces(), skip_many((comment(), spaces()))).map(|_| ())
 }
 
-fn comment<'a>() -> impl Parser<Input = &'a [u8], Output = ()> {
+fn comment<'a>() -> impl Parser<&'a [u8], Output = ()> {
     (
-        item(b'('),
+        token(b'('),
         skip_many(none_of(br"()\".iter().cloned())),
-        item(b')'),
+        token(b')'),
     )
         .map(|_| ())
 }
