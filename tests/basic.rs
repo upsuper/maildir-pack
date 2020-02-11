@@ -13,7 +13,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tar::Archive as TarArchive;
-use tempdir::TempDir;
+use tempfile::TempDir;
 use xz2::read::XzDecoder;
 
 type HashResult = [u8; 32];
@@ -100,8 +100,7 @@ struct TempMaildir {
 
 impl TempMaildir {
     fn new(name: &'static str) -> io::Result<Self> {
-        let dir_name = format!("{}-{}", env!("CARGO_PKG_NAME"), name);
-        let tmp_dir = TempDir::new(&dir_name)?;
+        let tmp_dir = TempDir::new()?;
         let new_dir = tmp_dir.path().join("new");
         let packed_dir = tmp_dir.path().join("packed");
         // Create maildir structure. Since we currently only use the new
