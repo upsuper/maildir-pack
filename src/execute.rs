@@ -69,7 +69,7 @@ fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> Result<()> {
     if let Ok(file) = File::open(&archive_path) {
         fill_archive_from(file, &mut tar_builder, &mut existing_files)?;
         let backup_path = args.packed_dir.join(format!("{}.bak", archive_name));
-        fs::rename(&archive_path, &backup_path)?;
+        fs::hard_link(&archive_path, &backup_path)?;
     }
 
     // Adding emails to the archive.
