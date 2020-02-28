@@ -12,7 +12,7 @@ It would scan all emails in `maildir/new` and pack them into `maildir/packed`.
 
 ## License
 
-Copyright (C) 2017-2019 Xidorn Quan
+Copyright (C) 2017-2020 Xidorn Quan
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
