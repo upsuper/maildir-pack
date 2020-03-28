@@ -69,7 +69,9 @@ fn do_archive(args: &Args, name: &str, emails: Vec<PathBuf>) -> Result<()> {
     if let Ok(file) = File::open(&archive_path) {
         fill_archive_from(file, &mut tar_builder, &mut existing_files)?;
         let backup_path = args.packed_dir.join(format!("{}.bak", archive_name));
-        fs::hard_link(&archive_path, &backup_path)?;
+        // Remove old backup file. It's okay if it fails, because it's being overridden anyway.
+        let _ = fs::remove_file(&backup_path);
+        fs::hard_link(&archive_path, &backup_path).context("failed to link backup file")?;
     }
 
     // Adding emails to the archive.
