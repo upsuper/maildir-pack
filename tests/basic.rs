@@ -75,10 +75,10 @@ fn hash_content(mut reader: impl Read) -> io::Result<HashResult> {
         if len == 0 {
             break;
         }
-        hasher.input(&buf[..len]);
+        hasher.update(&buf[..len]);
     }
     let mut result = [0; 32];
-    result.copy_from_slice(hasher.result().as_slice());
+    result.copy_from_slice(hasher.finalize().as_slice());
     Ok(result)
 }
 

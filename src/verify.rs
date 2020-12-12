@@ -19,7 +19,7 @@ impl<R: Read> StreamHasher<R> {
 
     pub fn get_result(self) -> HashResult {
         let mut result = [0; HASH_LEN];
-        result.copy_from_slice(self.hasher.result().as_slice());
+        result.copy_from_slice(self.hasher.finalize().as_slice());
         result
     }
 }
@@ -27,7 +27,7 @@ impl<R: Read> StreamHasher<R> {
 impl<R: Read> Read for StreamHasher<R> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let size = self.input.read(buf)?;
-        self.hasher.input(&buf[..size]);
+        self.hasher.update(&buf[..size]);
         Ok(size)
     }
 }
