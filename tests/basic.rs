@@ -1,6 +1,6 @@
 use assert_cmd::prelude::*;
-use lazy_static::lazy_static;
 use leak::Leak;
+use once_cell::sync::Lazy;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::env;
@@ -21,18 +21,16 @@ type HashResult = [u8; 32];
 const ARCHIVE_SUFFIX: &'static str = ".tar.xz";
 const BACKUP_SUFFIX: &'static str = ".tar.xz.bak";
 
-lazy_static! {
-    static ref KEEP_TEST_DIR: bool = { env::var("KEEP_TEST_DIR").is_ok() };
-    static ref EMAILS_PATH: PathBuf = {
-        let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        let mut path = Path::new(manifest_dir).to_path_buf();
-        path.push("tests");
-        path.push("emails");
-        path
-    };
-    static ref ALL_EMAILS: HashMap<&'static str, Vec<&'static Path>> = { list_emails().unwrap() };
-    static ref EMAIL_HASHS: HashMap<&'static Path, HashResult> = { hash_emails().unwrap() };
-}
+static KEEP_TEST_DIR: Lazy<bool> = Lazy::new(|| env::var("KEEP_TEST_DIR").is_ok());
+static EMAILS_PATH: Lazy<PathBuf> = Lazy::new(|| {
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let mut path = Path::new(manifest_dir).to_path_buf();
+    path.push("tests");
+    path.push("emails");
+    path
+});
+static ALL_EMAILS: Lazy<HashMap<&str, Vec<&Path>>> = Lazy::new(|| list_emails().unwrap());
+static EMAIL_HASHS: Lazy<HashMap<&Path, HashResult>> = Lazy::new(|| hash_emails().unwrap());
 
 fn list_emails() -> io::Result<HashMap<&'static str, Vec<&'static Path>>> {
     fn should_skip(path: &Path) -> bool {

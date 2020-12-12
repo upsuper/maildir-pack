@@ -323,8 +323,8 @@ dependencies = [
  "clap",
  "combine",
  "indicatif",
- "lazy_static",
  "leak",
+ "once_cell",
  "rayon",
  "sha2",
  "tar",
@@ -381,6 +381,12 @@ name = "number_prefix"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17b02fc0ff9a9e4b35b3342880f48e896ebf69f2967921fe8646bf5b7125956a"
+
+[[package]]
+name = "once_cell"
+version = "1.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13bd41f508810a131401606d54ac32a467c97172d74ba7662562ebba5ad07fa0"
 
 [[package]]
 name = "opaque-debug"
