@@ -13,7 +13,7 @@ pub fn classify_emails(
     let mut map = HashMap::new();
     for (path, dt) in list {
         map.entry(get_archive_name(&dt))
-            .or_insert_with(|| vec![])
+            .or_insert_with(Vec::new)
             .push(path);
     }
     map
