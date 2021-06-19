@@ -1,6 +1,6 @@
 # maildir-pack
 
-[![Build Status](https://travis-ci.org/upsuper/maildir-pack.svg?branch=master)](https://travis-ci.org/upsuper/maildir-pack)
+[![Build Status](https://github.com/upsuper/maildir-pack/actions/workflows/check.yml/badge.svg)](https://github.com/upsuper/maildir-pack/actions/workflows/check.yml)
 
 `maildir-pack` is a tool to pack emails in a maildir into monthly archive files.
 
@@ -12,7 +12,7 @@ It would scan all emails in `maildir/new` and pack them into `maildir/packed`.
 
 ## License
 
-Copyright (C) 2017-2020 Xidorn Quan
+Copyright (C) 2017-2021 Xidorn Quan
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
