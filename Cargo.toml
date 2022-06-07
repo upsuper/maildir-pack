@@ -1,6 +1,6 @@
 [package]
 name = "maildir-pack"
-description = "Pack maildir into archive files"
+description = "Pack mails from a maildir into archives"
 version = "0.1.3"
 authors = ["Xidorn Quan <me@upsuper.org>"]
 license = "GPL-3.0-or-later"
@@ -13,7 +13,7 @@ publish = false
 [dependencies]
 anyhow = "1.0.13"
 chrono = "0.4.2"
-clap = "3.1.18"
+clap = { version = "3.1.18", features = ["derive"] }
 combine = "4.0.1"
 indicatif = "0.16.2"
 rayon = "1.0.0"
