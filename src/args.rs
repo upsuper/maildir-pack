@@ -6,13 +6,12 @@ use std::path::PathBuf;
 #[clap(author, version, about)]
 pub struct Args {
     /// Path to the maildir.
-    #[clap(parse(from_os_str))]
     pub maildir: PathBuf,
     /// The directory we put packed archives in, which is maildir/packed.
     #[clap(skip)]
     pub packed_dir: PathBuf,
     /// Suppress any progress output if set.
-    #[clap(short, long, parse(from_flag))]
+    #[clap(short, long)]
     pub quiet: bool,
 }
 
