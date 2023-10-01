@@ -22,7 +22,7 @@ pub fn date_time<'a>() -> impl Parser<&'a [u8], Output = DateTime<FixedOffset>> 
         .and_then(|(dow, date, (time, tz), _)| {
             if dow.map_or(true, |(dow, _)| date.weekday() == dow) {
                 let naive_dt = NaiveDateTime::new(date, time);
-                Ok(DateTime::from_utc(naive_dt - tz, tz))
+                Ok(DateTime::from_naive_utc_and_offset(naive_dt - tz, tz))
             } else {
                 Err(UnexpectedParse::Unexpected)
             }
@@ -59,7 +59,9 @@ fn date<'a>() -> impl Parser<&'a [u8], Output = NaiveDate> {
         month(),
         year(),
     )
-        .map(|(day, month, year)| NaiveDate::from_ymd(year, month, day))
+        .and_then(|(day, month, year)| {
+            NaiveDate::from_ymd_opt(year, month, day).ok_or(UnexpectedParse::Unexpected)
+        })
 }
 
 fn month<'a>() -> impl Parser<&'a [u8], Output = u32> {
@@ -139,13 +141,14 @@ fn zone<'a>() -> impl Parser<&'a [u8], Output = FixedOffset> {
             digit(),
             digit(),
         )
-            .map(|(_, op, d1, d2, d3, d4)| {
+            .and_then(|(_, op, d1, d2, d3, d4)| {
                 let hour = atoi(d1) * 10 + atoi(d2);
                 let minute = atoi(d3) * 10 + atoi(d4);
                 let secs = (hour * 3600 + minute * 60) as i32;
                 // We treat -0000 as +0000 here as there is nothing else we can
                 // do for that case.
-                FixedOffset::east(if op == b'-' { -secs } else { secs })
+                FixedOffset::east_opt(if op == b'-' { -secs } else { secs })
+                    .ok_or(UnexpectedParse::Unexpected)
             }),
         obs_zone(),
     ))
@@ -164,7 +167,7 @@ fn obs_zone<'a>() -> impl Parser<&'a [u8], Output = FixedOffset> {
         b"pst" => -8,
         b"pdt" => -7,
     })
-    .map(|hour| FixedOffset::east(hour * 3600))
+    .map(|hour| FixedOffset::east_opt(hour * 3600).unwrap())
 }
 
 fn one_or_two_digits_with_cfws<'a>() -> impl Parser<&'a [u8], Output = u32> {
