@@ -1,5 +1,6 @@
 use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime, Weekday};
 use combine::{
+    Parser,
     error::UnexpectedParse,
     parser::{
         byte::{bytes_cmp, digit, spaces},
@@ -9,7 +10,6 @@ use combine::{
         repeat::{skip_many, skip_many1},
         token::{none_of, one_of, token},
     },
-    Parser,
 };
 
 pub fn date_time<'a>() -> impl Parser<&'a [u8], Output = DateTime<FixedOffset>> {
