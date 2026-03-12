@@ -141,7 +141,7 @@ impl Drop for TempMaildir {
         if !*KEEP_TEST_DIR {
             tmp_dir.close().unwrap();
         } else {
-            let path = tmp_dir.into_path();
+            let path = tmp_dir.keep();
             eprintln!("{}: {:?}", self.name, path);
         }
     }
