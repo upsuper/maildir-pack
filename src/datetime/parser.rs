@@ -20,7 +20,7 @@ pub fn date_time<'a>() -> impl Parser<&'a [u8], Output = DateTime<FixedOffset>> 
         optional(cfws()),
     )
         .and_then(|(dow, date, (time, tz), _)| {
-            if dow.map_or(true, |(dow, _)| date.weekday() == dow) {
+            if dow.is_none_or(|(dow, _)| date.weekday() == dow) {
                 let naive_dt = NaiveDateTime::new(date, time);
                 Ok(DateTime::from_naive_utc_and_offset(naive_dt - tz, tz))
             } else {

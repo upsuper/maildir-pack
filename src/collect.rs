@@ -25,12 +25,12 @@ fn get_datetime_from_email(file: &Path) -> Result<Option<DateTime<FixedOffset>>>
         if line.is_empty() {
             break;
         }
-        if date.is_some() {
+        if let Some(date) = &mut date {
             // Line breaks can be folded with whitespaces.
             if !is_wsp(line[0]) {
                 break;
             }
-            date.as_mut().unwrap().extend(line);
+            date.extend(line);
         } else {
             if line.len() <= DATE_HEADER.len()
                 || !line[..DATE_HEADER.len()].eq_ignore_ascii_case(DATE_HEADER)
@@ -45,7 +45,7 @@ fn get_datetime_from_email(file: &Path) -> Result<Option<DateTime<FixedOffset>>>
 
 pub fn list_emails(args: &Args) -> Result<Vec<(PathBuf, Option<DateTime<FixedOffset>>)>> {
     let mut files = vec![];
-    for entry in fs::read_dir(&args.maildir.join("new"))? {
+    for entry in fs::read_dir(args.maildir.join("new"))? {
         files.push(entry?.path());
     }
 
